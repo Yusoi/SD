@@ -76,7 +76,7 @@ public class Client extends Thread {
         System.out.println("Server type: [typeX] [typeY] etc"); //Listar o tipo de servidores que temos disponiveis
         if (s.hasNextLine()) {
             type = s.nextLine();
-            if(!type.equals("typeX") || type.equals("typeY")){ //Depois mudar
+            if(!(type.equals("typeX") || type.equals("typeY"))){ //Depois mudar
                 System.out.println("ERROR: Invalid type.");
                 return;
             }
@@ -106,7 +106,7 @@ public class Client extends Thread {
         System.out.println("Bid: ");
         if (s.hasNextLine()) {
             bid = s.nextLine();
-            if(Integer.parseInt(bid)<=0) {
+            if(Float.parseFloat(bid)<=0) {
                 System.out.println("ERROR: Bid must be greater than zero.");
                 return;
             }
