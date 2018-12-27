@@ -1,8 +1,10 @@
-import Client.User;
-import Server.ExistingUserException;
-import Server.Rent;
-import Server.Server;
-import Server.WrongCredentialsException;
+package Server;
+
+import Business.User;
+import Exceptions.ExistingUserException;
+import Business.Rent;
+import Business.Server;
+import Exceptions.WrongCredentialsException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -20,9 +22,15 @@ public class Cloud implements Runnable{
     //Guarda preços por tipo de servidor, String = ServerType
     public HashMap<String, Float> prices;
 
-    public static int port = 4242;
+    public int port;
     public ServerSocket serverSocket = null;
     public Thread currentThread = null;
+
+    public boolean isStopped = true;
+
+    public Cloud(int port){
+        this.port = port;
+    }
 
     // mandar por socket ao cliente a dizer erro ou certo
     synchronized public boolean register(String email, String password) throws ExistingUserException {
@@ -40,7 +48,6 @@ public class Cloud implements Runnable{
         if (users.containsKey(email)&& users.get(email).getPassword() == password){
             return true;
         } else throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password");
-
     }
 
     synchronized public void addServer(Server s)  {
@@ -51,7 +58,7 @@ public class Cloud implements Runnable{
         }
     }
 
-    public void createRent(int rentType, User user, Server server){
+    public void addRent(int rentType, User user, Server server){
         int id = generateRentId();
         Rent r = new Rent(id,rentType,user,server);
         rents.put(id,r);
@@ -70,14 +77,17 @@ public class Cloud implements Runnable{
         }
         openServerSocket();
 
-        Socket clientSocket = null;
-        
-        try{
-            clientSocket = this.serverSocket.accept();
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+        while(!isStopped) {
+            Socket clientSocket = null;
 
+            try {
+                clientSocket = this.serverSocket.accept();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            new Thread(new ClientConnection(clientSocket)).start();
+        }
 
     }
 
@@ -89,8 +99,4 @@ public class Cloud implements Runnable{
         }
     }
 
-    /*Arrancar com os servidores e clientes*/
-    public static void main(String[] args){
-
-    }
 }

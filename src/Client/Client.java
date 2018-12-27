@@ -1,5 +1,7 @@
 package Client;
 
+import Business.User;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -21,7 +23,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de registo para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de registo para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void register() throws IOException {
         Scanner s = new Scanner(System.in);
@@ -44,7 +46,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de autenticação para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de autenticação para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void login() throws IOException {
         Scanner s = new Scanner(System.in);
@@ -67,7 +69,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de realização de um pedido de reserva para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de realização de um pedido de reserva para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void order() throws IOException {
         Scanner s = new Scanner(System.in);
@@ -88,7 +90,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de participação num leilão de reserva para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de participação num leilão de reserva para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void auction() throws IOException {
         Scanner s = new Scanner(System.in);
@@ -119,7 +121,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de libertar um servidor para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de libertar um servidor para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void leaveServer() throws IOException {
         Scanner s = new Scanner(System.in);
@@ -140,10 +142,10 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de consulta dos fundos para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de consulta dos fundos para o testeWorker da Server.Cloud associado a este cliente.
      *
-     * Como a Cloud não vai mandando msg com o valor atual dos fundos, os fundos obtidos pela autenticação podem já ter mudado.
-     * Logo tem de se pedir sempre à Cloud, não se podendo consultar o USER porque pode estar desatualizado.
+     * Como a Server.Cloud não vai mandando msg com o valor atual dos fundos, os fundos obtidos pela autenticação podem já ter mudado.
+     * Logo tem de se pedir sempre à Server.Cloud, não se podendo consultar o USER porque pode estar desatualizado.
      */
     public void funds() throws IOException {
         out.write("Funds\n");
@@ -151,7 +153,7 @@ public class Client extends Thread {
     }
 
     /**
-     * Método que envia as informações necessárias de desautenticação para o testeWorker da Cloud associado a este cliente.
+     * Método que envia as informações necessárias de desautenticação para o testeWorker da Server.Cloud associado a este cliente.
      */
     public void logout() throws IOException {
         out.write("Logout\n");
@@ -167,10 +169,10 @@ public class Client extends Thread {
     }
 
     /**
-     * Main do Client que inicia um cliente criando um socket para este se conectar com a Cloud.
+     * Main do Client que inicia um cliente criando um socket para este se conectar com a Server.Cloud.
      *
-     * O Client lê do terminal e escreve para a Cloud pedindo as ações solicitadas com a devida informação.
-     * A thread ReadFromCloud lê da Cloud respostas a essas ações e escreve-as no terminal do Client.
+     * O Client lê do terminal e escreve para a Server.Cloud pedindo as ações solicitadas com a devida informação.
+     * A thread ReadFromCloud lê da Server.Cloud respostas a essas ações e escreve-as no terminal do Client.
      */
     public static void main(String[] args) {
         Socket socket = null;

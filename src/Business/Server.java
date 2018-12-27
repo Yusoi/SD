@@ -1,4 +1,7 @@
-package Server;
+package Business;
+
+import Business.Bid;
+import Business.Rent;
 
 import java.util.concurrent.locks.Condition;
 

@@ -1,6 +1,4 @@
-package Server;
-
-import Client.User;
+package Business;
 
 public class Rent {
 

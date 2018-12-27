@@ -1,4 +1,4 @@
-package Server;
+package Exceptions;
 
 
 public class ExistingUserException extends Exception {

@@ -1,5 +1,7 @@
 package Client;
 
+import Business.User;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,7 +9,7 @@ import java.net.Socket;
 
 /**
  * Classe Runnable que é criada como Thread por um Cliente quando este se inicia.
- * Esta tem como função ler as informações provenientes da Cloud para o Cliente e
+ * Esta tem como função ler as informações provenientes da Server.Cloud para o Cliente e
  * escreve-las no terminal.
  */
 public class ReadFromCloud implements Runnable{
@@ -22,7 +24,7 @@ public class ReadFromCloud implements Runnable{
 
     /**
      * Método executado sempre que a Thread é criada.
-     * Esta cria um BufferedReader para ler as informações provenientes da Cloud.
+     * Esta cria um BufferedReader para ler as informações provenientes da Server.Cloud.
      * Consoante as informações recebidas, esta escreve mensagems para o terminal do Cliente.
      */
     public void run() {
@@ -95,7 +97,7 @@ public class ReadFromCloud implements Runnable{
                         break;
 
                     default:
-                        System.out.println("ERROR: There seems to be a problem with the Cloud.\n");
+                        System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
                 }
 
                 if(!logedOut)
