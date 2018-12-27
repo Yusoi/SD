@@ -27,15 +27,12 @@ public class User {
         this.lockIDs = new ReentrantLock();
     }
 
-    public User(String em, String pass, float fund, Map<Integer,String> ids){
+    public User(String em, String pass, float fund){
         this.email = em;
         this.password = pass;
         this.funds = fund;
 
         this.reservationIDsType = new HashMap<>();
-        for(Map.Entry<Integer,String> e : ids.entrySet()) {
-            this.reservationIDsType.put(e.getKey(), e.getValue());
-        }
 
         this.lockEmail = new ReentrantLock();
         this.lockPass = new ReentrantLock();

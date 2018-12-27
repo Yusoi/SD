@@ -4,18 +4,25 @@ import Server.Rent;
 import Server.Server;
 import Server.WrongCredentialsException;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
 
-public class Cloud {
+public class Cloud implements Runnable{
 
     public HashMap<String,User> users; //users ou clients again
     //Guardar Servidores
     public HashMap<String,Integer> freeServers;
     //Guarda rents por identificador
     public HashMap<Integer, Rent> rents;
-    //String = ServerType
+    //Guarda preços por tipo de servidor, String = ServerType
     public HashMap<String, Float> prices;
+
+    public static int port = 4242;
+    public ServerSocket serverSocket = null;
+    public Thread currentThread = null;
 
     // mandar por socket ao cliente a dizer erro ou certo
     synchronized public boolean register(String email, String password) throws ExistingUserException {
@@ -44,23 +51,43 @@ public class Cloud {
         }
     }
 
-
-    public int rent(Float bid, String serverType, int rentType, User user, Server server){
-
-        // como assim criar uma rent aqui?
-
+    public void createRent(int rentType, User user, Server server){
         int id = generateRentId();
-
         Rent r = new Rent(id,rentType,user,server);
-
-        return id;
+        rents.put(id,r);
     }
 
     public int generateRentId(){
-        return Collections.max(rents.keySet());
+        return Collections.max(rents.keySet())+1;
     }
 
 
+    @Override
+    public void run(){
+
+        synchronized(this){
+            currentThread = Thread.currentThread();
+        }
+        openServerSocket();
+
+        Socket clientSocket = null;
+        
+        try{
+            clientSocket = this.serverSocket.accept();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void openServerSocket(){
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 
     /*Arrancar com os servidores e clientes*/
     public static void main(String[] args){
