@@ -42,11 +42,15 @@ public class Bid {
         this.server = server;
     }
 
-    synchronized public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException{
+    synchronized public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException, NotEnoughMoneyException{
 
         if (newValue > value) {
-            this.setHighestBidder(newBidder);
-            this.setValue(newValue);
+            if(newBidder.getFunds() > newValue) {
+                this.setHighestBidder(newBidder);
+                this.setValue(newValue);
+            }else{
+                throw new NotEnoughMoneyException("O utilizador não tem fundos suficientes");
+            }
         }else{
             throw new BidNotHighEnoughException("O valor não é superior que o valor atual licitado");
         }
@@ -55,6 +59,7 @@ public class Bid {
     synchronized public void closeBid(){
         Random random = new Random();
         Rent rent = new Rent(random.nextInt(), 1, this.highestBidder, this.server);
+        this.highestBidder.useFunds(value);
 
     }
 }

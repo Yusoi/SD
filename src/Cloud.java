@@ -17,6 +17,7 @@ public class Cloud {
     //String = ServerType
     public HashMap<String, Float> prices;
 
+    // mandar por socket ao cliente a dizer erro ou certo
     synchronized public boolean register(String email, String password) throws ExistingUserException {
         if (users.containsKey(email)) {
             throw new ExistingUserException("O utilizador já existe");
@@ -25,7 +26,7 @@ public class Cloud {
         users.put(email,user);
 
         return true; //na "interface", basta ver se é true para imprimir "registado com sucesso" ou algo do genero.
-        }
+    }
 
 
     synchronized public boolean login(String email, String password) throws WrongCredentialsException {
