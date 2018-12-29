@@ -13,6 +13,8 @@ public class Client extends Thread {
     private User user;
     private BufferedWriter out;
 
+    private int port;
+
     public Client(BufferedWriter out){
         this.user = new User();
         this.out = out;
