@@ -1,4 +1,7 @@
-package Server;
+package Business;
+
+import Business.Bid;
+import Business.Rent;
 
 import java.util.concurrent.locks.Condition;
 
@@ -11,8 +14,10 @@ public class Server extends Thread{
     public Condition nonOcupated;
 
     public Server(String id,Float preco){
-
+        this.serverId = id;
+        this.precoNominal = preco;
     }
+
     public String getServerId() {
         return serverId;
     }

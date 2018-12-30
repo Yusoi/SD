@@ -1,13 +1,11 @@
-package Server;
-
-import Client.User;
+package Business;
 
 public class Rent {
 
     public int id;
     public int rentType; //0 é alugar direto(pagando o preço nominal) 1 é ir a leilão(bid)
-    public User user;
-    public Server server;
+    public User user; //Utilizador que alugou o servidor
+    public Server server; //Servidor que foi alugado
 
     public Rent(int i, int r, User u, Server s){
         this.id = i;

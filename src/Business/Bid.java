@@ -1,8 +1,7 @@
-package Server;
+package Business;
 
-import Client.Client;
-import Client.BidNotHighEnoughException;
-import Client.User;
+import Exceptions.BidNotHighEnoughException;
+import Exceptions.NotEnoughMoneyException;
 
 import java.util.Random;
 
@@ -42,7 +41,7 @@ public class Bid {
         this.server = server;
     }
 
-    synchronized public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException, NotEnoughMoneyException{
+    synchronized public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException, NotEnoughMoneyException {
 
         if (newValue > value) {
             if(newBidder.getFunds() > newValue) {

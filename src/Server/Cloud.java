@@ -1,21 +1,42 @@
-import Client.User;
-import Server.ExistingUserException;
-import Server.Rent;
-import Server.Server;
-import Server.WrongCredentialsException;
+package Server;
 
+import Business.User;
+import Exceptions.ExistingUserException;
+import Business.Rent;
+import Business.Server;
+import Exceptions.WrongCredentialsException;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class Cloud {
+public class Cloud implements Runnable{
 
+    //Guardar utilizadores
     public HashMap<String,User> users; //users ou clients again
     //Guardar Servidores
     public HashMap<String,Integer> freeServers;
     //Guarda rents por identificador
     public HashMap<Integer, Rent> rents;
-    //String = ServerType
+    //Guarda preços por tipo de servidor, String = ServerType
     public HashMap<String, Float> prices;
+
+    //Port da ServerSocket
+    public int port;
+    //O ServerSocket em si
+    public ServerSocket serverSocket = null;
+    //Server está parado ou não
+    public boolean isStopped = true;
+
+
+    public Cloud(int port){
+        this.port = port;
+    }
 
     // mandar por socket ao cliente a dizer erro ou certo
     synchronized public boolean register(String email, String password) throws ExistingUserException {
@@ -28,12 +49,10 @@ public class Cloud {
         return true; //na "interface", basta ver se é true para imprimir "registado com sucesso" ou algo do genero.
     }
 
-
     synchronized public boolean login(String email, String password) throws WrongCredentialsException {
         if (users.containsKey(email)&& users.get(email).getPassword() == password){
             return true;
         } else throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password");
-
     }
 
     synchronized public void addServer(Server s)  {
@@ -44,26 +63,50 @@ public class Cloud {
         }
     }
 
-
-    public int rent(Float bid, String serverType, int rentType, User user, Server server){
-
-        // como assim criar uma rent aqui?
-
+    public synchronized void addRent(int rentType, User user, Server server){
         int id = generateRentId();
-
         Rent r = new Rent(id,rentType,user,server);
+        rents.put(id,r);
+    }
 
-        return id;
+    public synchronized void order(String serverType){
+
     }
 
     public int generateRentId(){
-        return Collections.max(rents.keySet());
+        return Collections.max(rents.keySet())+1;
     }
 
+    @Override
+    public void run(){
+
+        openServerSocket();
+
+        while(!isStopped) {
+            Socket clientSocket = null;
+
+            try {
+
+                clientSocket = this.serverSocket.accept();
+
+                new Thread(new ClientConnection(clientSocket,this)).start();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
 
-    /*Arrancar com os servidores e clientes*/
-    public static void main(String[] args){
+        }
 
     }
+
+    //Abre a ServerSocket
+    public void openServerSocket(){
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
 }
