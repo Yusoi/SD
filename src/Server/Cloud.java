@@ -39,13 +39,6 @@ public class Cloud implements Runnable{
     }
 
     // mandar por socket ao cliente a dizer erro ou certo
-    /**
-     *
-     * @param email
-     * @param password
-     * @return
-     * @throws ExistingUserException
-     */
     synchronized public boolean register(String email, String password) throws ExistingUserException {
         if (users.containsKey(email)) {
             throw new ExistingUserException("O utilizador já existe");
@@ -56,23 +49,12 @@ public class Cloud implements Runnable{
         return true; //na "interface", basta ver se é true para imprimir "registado com sucesso" ou algo do genero.
     }
 
-    /**
-     *
-     * @param email
-     * @param password
-     * @return
-     * @throws WrongCredentialsException
-     */
     synchronized public boolean login(String email, String password) throws WrongCredentialsException {
         if (users.containsKey(email)&& users.get(email).getPassword() == password){
             return true;
         } else throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password");
     }
 
-    /**
-     *
-     * @param s
-     */
     synchronized public void addServer(Server s)  {
         if(freeServers.containsKey(s.getServerId())){
             freeServers.put(s.getServerId(),freeServers.get(s.getServerId())+1);
@@ -81,31 +63,19 @@ public class Cloud implements Runnable{
         }
     }
 
-    /**
-     * @param rentType
-     * @param user
-     * @param server
-     */
     public synchronized void addRent(int rentType, User user, Server server){
         int id = generateRentId();
         Rent r = new Rent(id,rentType,user,server);
         rents.put(id,r);
     }
 
-    public List<String> getServerCatalogue(){
-        List<String> catalogue = prices.keySet().stream().collect(Collectors.toList());
+    public synchronized void order(String serverType){
 
-        return catalogue;
     }
 
-    /**
-     *
-     * @return
-     */
     public int generateRentId(){
         return Collections.max(rents.keySet())+1;
     }
-
 
     @Override
     public void run(){
