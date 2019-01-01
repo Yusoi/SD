@@ -4,9 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.List;
 
-import Exceptions.ExistingUserException;
-import Exceptions.OperationUnsuccessfulException;
-import Exceptions.WrongCredentialsException;
+import Exceptions.*;
 
 public class ClientConnection implements Runnable{
 
@@ -20,93 +18,125 @@ public class ClientConnection implements Runnable{
         this.email = null;
     }
 
-
-
-    public String operationInterpreter(String message,BufferedReader reader) throws OperationUnsuccessfulException{
-        String answer = null;
+    public void operationInterpreter(String message,BufferedReader reader,PrintWriter writer) throws OperationUnsuccessfulException{
 
         try {
-            if (message.equals("Login")) {
 
-                String email = reader.readLine();
-                String password = reader.readLine();
+            switch(message){
 
-                try {
-                    cloud.login(email, password);
-                    this.email = email;
-                    answer = "LoginSuccess\n";
-                }catch(WrongCredentialsException e){
-                    return e.toString();
+                case "Login": {
+
+                    String email = reader.readLine();
+                    String password = reader.readLine();
+
+                    try {
+                        cloud.login(email, password);
+                        this.email = email;
+                        writer.append("LoginSuccess\n");
+                    } catch (WrongCredentialsException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                    break;
                 }
 
-            } else if(message.equals("Register")) {
+                case "Register": {
 
-                String email = reader.readLine();
-                String password = reader.readLine();
+                    String email = reader.readLine();
+                    String password = reader.readLine();
 
-                try{
-                    cloud.register(email,password);
-                    answer = "RegisterSuccess\n";
-                }catch(ExistingUserException e){
-                    return e.toString();
+                    try {
+                        cloud.register(email, password);
+                        writer.append("RegisterSuccess\n");
+                        writer.append("Utilizador registado com sucesso!");
+                    } catch (ExistingUserException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                    break;
                 }
 
-            } else if(message.equals("Order")) {
+                case "Order": {
 
-                String type = reader.readLine();
+                    String type = reader.readLine();
 
-                //TODO
-                try{
-                    answer = "OrderSuccess\n";
-                }catch(){
+                    try {
+                        int id = cloud.order(type,email);
 
+                        writer.append("OrderSuccess\n");
+                        writer.append(String.valueOf(id)+"\n");
+                        writer.append(type+"\n");
+                        writer.append("Order was created successfully\n");
+                    } catch (NonExistingServerException e ) {
+                        writer.append("Unsuccessful\n");
+                    } catch (UserNotAutenthicatedException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                    break;
                 }
 
-            } else if(message.equals("Auction")) {
+                case "Auction": {
 
-                String type = reader.readLine();
-                String bid = reader.readLine();
+                    String type = reader.readLine();
+                    String bid = reader.readLine();
 
-                //TODO
-                try{
-                    answer = "AuctionSuccess\n";
-                }catch(){
-
+                    try {
+                        int id = cloud.auction(type,Float.valueOf(bid),email);
+                        writer.append("AuctionSuccess\n");
+                        writer.append(String.valueOf(id)+"\n");
+                        writer.append(type+"\n");
+                        writer.append("Auction was created successfully\n");
+                    } catch (NonExistingServerException e) {
+                        writer.append("Unsuccessful\n");
+                    } catch (UserNotAutenthicatedException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                    break;
                 }
 
-            } else if(message.equals("LeaveServer")) {
-                String id = reader.readLine();
+                case "LeaveServer": {
+                    String id = reader.readLine();
 
-                //TODO
-                try{
-                    answer = "LeaveServerSuccess\n";
-                }catch(){
-
-                }
-            } else if(message.equals("Funds")) {
-                //TODO
-                try{
-                    answer = "Funds\n";
-                }catch(){
-
-                }
-            } else if(message.equals("Logout")) {
-
-                this.email = null;
-                try{
-                    answer = "AuctionSuccess\n";
-                }catch(){
-
+                    try {
+                        cloud.leaveServer(Integer.valueOf(id));
+                        writer.append("LeaveServerSuccess\n");
+                        writer.append("Servidor abandonado com sucesso!\n");
+                    } catch (NonExistingServerException e) {
+                        writer.append("Unsuccessful\n");
+                    } catch (UserNotAutenthicatedException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                    break;
                 }
 
-            } else {
-                throw (new OperationUnsuccessfulException("Unsuccess\n"));
+                case "Funds": {
+                    try {
+                        float funds = cloud.funds(email);
+                        writer.append("Funds\n");
+                        writer.append(Float.toString(funds) + "\n");
+                        writer.append("Funds: " + Float.toString(funds) + "\n");
+                        break;
+                    } catch(UserNotAutenthicatedException e) {
+                        writer.append("Unsuccessful\n");
+                    }
+                }
+
+                case "Logout": {
+                    this.email = null;
+                    writer.append("LogoutSuccess\n");
+                    writer.append("Logout efetuado com sucesso!\n");
+                    break;
+                }
+
+                default: {
+                    throw (new OperationUnsuccessfulException("Unsuccessful\n"));
+                }
+
             }
+
         }catch(IOException e){
-            e.printStackTrace();
+            writer.append("Unsuccessful\n");
         }
 
-        return answer;
+        writer.flush();
     }
 
 
@@ -119,19 +149,16 @@ public class ClientConnection implements Runnable{
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
             PrintWriter writer = new PrintWriter(output);
 
-            String message = null;
-            String answer = null;
+            String message;
 
             while(!clientSocket.isClosed()){
                 message = reader.readLine();
 
                 try{
 
-                    answer = operationInterpreter(message,reader);
-                    writer.write(answer);
-                    writer.flush();
+                    operationInterpreter(message,reader,writer);
 
-                }catch(OperationUnsuccessfulException e){
+                } catch(OperationUnsuccessfulException e){
                     System.out.println(e.toString());
                 }
             }
