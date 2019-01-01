@@ -4,6 +4,8 @@ import Business.User;
 import Exceptions.ExistingUserException;
 import Business.Rent;
 import Business.Server;
+import Exceptions.NonExistingServerException;
+import Exceptions.UserNotAutenthicatedException;
 import Exceptions.WrongCredentialsException;
 
 import java.io.IOException;
@@ -19,7 +21,7 @@ public class Cloud implements Runnable{
 
     //Guardar utilizadores
     public HashMap<String,User> users; //users ou clients again
-    //Guardar Servidores
+    //Guardar número de servidores livres de cada tipo
     public HashMap<String,Integer> freeServers;
     //Guarda rents por identificador
     public HashMap<Integer, Rent> rents;
@@ -69,8 +71,36 @@ public class Cloud implements Runnable{
         rents.put(id,r);
     }
 
-    public synchronized void order(String serverType){
+    public synchronized int order(String serverType, String email) throws NonExistingServerException, UserNotAutenthicatedException{
+        Integer typeCheck = freeServers.get(serverType);
+        if(typeCheck == 0 || typeCheck == null){
+            throw new NonExistingServerException("Server Nonexistent");
+        }
+        //TODO
 
+        return -1;
+    }
+
+    public synchronized int auction(String serverType, float bid , String email) throws NonExistingServerException, UserNotAutenthicatedException{
+        Integer typeCheck = freeServers.get(serverType);
+        if(typeCheck == 0 || typeCheck == null){
+            throw new NonExistingServerException("Server Nonexistent");
+        }
+        //TODO
+
+        return -1;
+    }
+
+    public synchronized void leaveServer(int id) throws NonExistingServerException, UserNotAutenthicatedException{
+        Rent rent = rents.get(id);
+        if(rent == null){
+            throw new NonExistingServerException("Server Nonexistent");
+        }
+        //TODO
+    }
+
+    public float funds(String email) throws UserNotAutenthicatedException{
+        return users.get(email).getFunds();
     }
 
     public int generateRentId(){

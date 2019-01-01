@@ -92,7 +92,7 @@ public class ReadFromCloud implements Runnable{
                         System.out.println(in.readLine());
                         break;
 
-                    case "Unsuccess":
+                    case "Unsuccessful":
                         System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
                         break;
 
