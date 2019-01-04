@@ -12,12 +12,14 @@ public class Client extends Thread {
 
     private User user;
     private BufferedWriter out;
+    private boolean loggedIn;
 
     private int port;
 
     public Client(BufferedWriter out){
         this.user = new User();
         this.out = out;
+        this.loggedIn = false;
     }
 
     public User getUser() {
@@ -94,6 +96,7 @@ public class Client extends Thread {
     /**
      * Método que envia as informações necessárias de participação num leilão de reserva para o testeWorker da Server.Cloud associado a este cliente.
      */
+    //TODO enviar o id da auction
     public void auction() throws IOException {
         Scanner s = new Scanner(System.in);
         String type = "", bid = "";
@@ -107,11 +110,11 @@ public class Client extends Thread {
             }
         }
 
-        System.out.println("Bid: ");
+        System.out.println("Auction: ");
         if (s.hasNextLine()) {
             bid = s.nextLine();
             if(Float.parseFloat(bid)<=0) {
-                System.out.println("ERROR: Bid must be greater than zero.");
+                System.out.println("ERROR: Auction must be greater than zero.");
                 return;
             }
         }
@@ -162,12 +165,20 @@ public class Client extends Thread {
         out.flush();
     }
 
-    public static void menu(String userMail) {
+    public static void menu(boolean loggedIn) {
         String menu1 = "Options:\n\t- Register\n\t- Login\n\t- Quit\n";
         String menu2 = "Options:\n\t- Order\n\t- Auction\n\t- LeaveServer\n\t- Funds\n\t- Logout\n";
 
-        if (userMail==null) System.out.print(menu1);
+        if (!loggedIn) System.out.print(menu1);
         else System.out.print(menu2);
+    }
+
+    public void setLoggedIn(boolean loggedIn){
+        this.loggedIn = loggedIn;
+    }
+
+    public boolean getLoggedIn(){
+        return this.loggedIn;
     }
 
     /**
@@ -184,21 +195,21 @@ public class Client extends Thread {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             Client c = new Client(out);
-            Thread t = new Thread(new ReadFromCloud(socket, c.getUser()));
+            Thread t = new Thread(new ReadFromCloud(socket, c));
             t.start();
 
             Scanner s = new Scanner(System.in);
             String str = "";
             boolean logedOut = false;
 
-            menu(c.getUser().getEmail());
+            menu(c.getLoggedIn());
 
             if (s.hasNextLine()) {
                 str = s.nextLine();
             }
 
             while(!(str.equals("Quit") && c.getUser().getEmail()==null) && !logedOut) {
-                if(c.getUser().getEmail()==null){
+                if(!c.getLoggedIn()){
                     switch (str) {
                         case "Register":
                             c.register();

@@ -3,13 +3,15 @@ package Business;
 public class Rent {
 
     public int id;
-    public int rentType; //0 é alugar direto(pagando o preço nominal) 1 é ir a leilão(bid)
+    public int rentType; //0 é alugar direto(pagando o preço nominal) 1 é ir a leilão(auction)
+    public float pricePerHour;
     public User user; //Utilizador que alugou o servidor
     public Server server; //Servidor que foi alugado
 
-    public Rent(int i, int r, User u, Server s){
+    public Rent(int i, int r, float pph, User u, Server s){
         this.id = i;
         this.rentType = r;
+        this.pricePerHour = pph;
         this.user = u;
         this.server = s;
     }
@@ -21,6 +23,8 @@ public class Rent {
     public int getRentType() {
         return rentType;
     }
+
+    public float getPricePerHour() { return pricePerHour; }
 
     public Server getServer() {
         return server;
@@ -37,6 +41,8 @@ public class Rent {
     public void setRentType(int rentType) {
         this.rentType = rentType;
     }
+
+    public void setPricePerHour(int pricePerHour) { this.pricePerHour = pricePerHour; }
 
     public void setServer(Server server) {
         this.server = server;
