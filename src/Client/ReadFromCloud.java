@@ -15,11 +15,11 @@ import java.net.Socket;
 public class ReadFromCloud implements Runnable{
 
     private Socket socket;
-    private User user;
+    private Client client;
 
-    public ReadFromCloud(Socket socket, User user) {
+    public ReadFromCloud(Socket socket, Client client) {
         this.socket = socket;
-        this.user = user;
+        this.client = client;
     }
 
     /**
@@ -33,75 +33,79 @@ public class ReadFromCloud implements Runnable{
 
             String str, type;
             int id;
-            boolean loggedOut = false;
 
-            while((str=in.readLine())!=null && !loggedOut){
-                switch (str) {
-                    case "RegisterSuccess":
-                        System.out.println(in.readLine()); //mensagem mais especifica para o cliente tipo "O registo ocorreu com sucesso.\n"
-                        break;
+            while((str=in.readLine())!=null){
+                if(!client.getLoggedIn()) {
+                    switch (str) {
+                        //Working
+                        case "RegisterSuccess":
+                            System.out.println(in.readLine()); //mensagem mais especifica para o cliente tipo "O registo ocorreu com sucesso.\n"
+                            break;
 
-                    case "LoginSuccess":
-                        this.user.setEmail(in.readLine());
-                        this.user.setPassword(in.readLine());
-                        this.user.setFunds(Float.valueOf(in.readLine()));
+                        //Working
+                        case "LoginSuccess":
+                            client.setLoggedIn(true);
+                            System.out.println(in.readLine());
+                            break;
 
-                        int qt_ids = Integer.parseInt(in.readLine());
-                        for(int i=0; i<qt_ids; i++){
+                        case "Unsuccessful":
+                            System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
+                            break;
+
+                        default:
+                            System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
+                    }
+                } else {
+                    switch(str){
+                        case "OrderSuccess":
                             id = Integer.parseInt(in.readLine());
                             type = in.readLine();
-                            this.user.putIdType(id,type);
-                        }
+                            System.out.println(in.readLine());
+                            break;
 
-                        System.out.println(in.readLine());
-                        break;
+                        case "AuctionSuccess":
+                            id = Integer.parseInt(in.readLine());
+                            type = in.readLine();
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "OrderSuccess":
-                        id = Integer.parseInt(in.readLine());
-                        type = in.readLine();
-                        this.user.putIdType(id, type);
-                        System.out.println(in.readLine());
-                        break;
+                        case "RentedServersSuccess":
+                            System.out.println("In Client");
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "AuctionSuccess":
-                        id = Integer.parseInt(in.readLine());
-                        type = in.readLine();
-                        this.user.putIdType(id, type);
-                        System.out.println(in.readLine());
-                        break;
+                        case "LeaveServerSuccess":
+                            id = Integer.parseInt(in.readLine());
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "LeaveServerSuccess":
-                        id = Integer.parseInt(in.readLine());
-                        this.user.remId(id);
-                        System.out.println(in.readLine());
-                        break;
+                        //Working
+                        case "Funds":
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "Funds":
-                        this.user.setFunds(Float.valueOf(in.readLine()));
-                        System.out.println(in.readLine());
-                        break;
+                        //Working
+                        case "LogoutSuccess":
+                            client.setLoggedIn(false);
+                            client.setEmail(null);
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "LogoutSuccess":
-                        loggedOut = true;
-                        System.out.println(in.readLine());
-                        break;
+                        case "CancelledServer":
+                            id = Integer.parseInt(in.readLine());
+                            System.out.println(in.readLine());
+                            break;
 
-                    case "CancelledServer":
-                        id = Integer.parseInt(in.readLine());
-                        this.user.remId(id);
-                        System.out.println(in.readLine());
-                        break;
+                        case "Unsuccessful":
+                            System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
+                            break;
 
-                    case "Unsuccessful":
-                        System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
-                        break;
-
-                    default:
-                        System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
+                        default:
+                            System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
+                    }
                 }
 
-                if(!loggedOut)
-                    Client.menu(this.user.getEmail());
+                client.menu(client.getLoggedIn());
             }
 
             socket.shutdownInput();

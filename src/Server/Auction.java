@@ -1,24 +1,41 @@
-package Business;
+package Server;
 
+import Business.Rent;
+import Business.Server;
+import Business.User;
 import Exceptions.BidNotHighEnoughException;
-import Exceptions.NotEnoughMoneyException;
+import Exceptions.NoBidException;
+import Exceptions.NonExistingServerException;
 
+import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Bid {
+import static java.lang.Thread.sleep;
 
+public class Auction implements Runnable{
+
+    private int id;
     private User highestBidder; //user ou client? Estava client
     private float value;
     private Server server;
     private ReentrantLock lock;
+    private LocalDateTime startingTime;
+    private int duration; //Seconds until the auction ends
+    private Cloud cloud;
 
-    public Bid(User bidder, float v, Server s){
-        this.highestBidder = bidder;
+    public Auction(int id, float v, Server s, int duration, Cloud cloud){
+        this.id = id;
+        this.highestBidder = null;
         this.value = v;
         this.server = s;
         this.lock = new ReentrantLock();
+        this.startingTime = LocalDateTime.now();
+        this.duration = duration;
+        this.cloud = cloud;
     }
+
+    public int getId(){return id;}
 
     public User getHighestBidder() {
         return highestBidder;
@@ -30,6 +47,10 @@ public class Bid {
 
     public Server getServer() {
         return server;
+    }
+
+    public void setId(int id){
+        this.id = id;
     }
 
     public void setHighestBidder(User highestBidder) {
@@ -44,15 +65,14 @@ public class Bid {
         this.server = server;
     }
 
-    public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException, NotEnoughMoneyException {
+    //TODO dar fix
+    public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException {
         lock.lock();
         try {
             if (newValue > value) {
                 if (newBidder.getFunds() > newValue) {
                     this.setHighestBidder(newBidder);
                     this.setValue(newValue);
-                } else {
-                    throw new NotEnoughMoneyException("O utilizador não tem fundos suficientes");
                 }
             } else {
                 throw new BidNotHighEnoughException("O valor não é superior que o valor atual licitado");
@@ -62,11 +82,24 @@ public class Bid {
         }
     }
 
-     public void closeBid(){
+
+     public void closeAuction(){
         Random random = new Random();
-        Rent rent = new Rent(random.nextInt(), 1, this.highestBidder, this.server);
+        Rent rent = new Rent(random.nextInt(), 1, value , this.highestBidder, this.server);
         lock.lock();
         this.highestBidder.useFunds(value);
         lock.unlock();
+    }
+
+    @Override
+    public void run(){
+        try {
+            sleep(duration);
+            cloud.endAuction(this.id,this.value,this.server.getServerName(),highestBidder.getEmail());
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }catch(NoBidException e){
+            System.out.println(e.toString()+" on auction "+this.id);
+        }
     }
 }

@@ -2,7 +2,6 @@ package Server;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
 
 import Exceptions.*;
 
@@ -33,8 +32,10 @@ public class ClientConnection implements Runnable{
                         cloud.login(email, password);
                         this.email = email;
                         writer.append("LoginSuccess\n");
+                        writer.append("Login was successful\n");
                     } catch (WrongCredentialsException e) {
                         writer.append("Unsuccessful\n");
+                        writer.append("Login Unsuccessful\n");
                     }
                     break;
                 }
@@ -47,7 +48,7 @@ public class ClientConnection implements Runnable{
                     try {
                         cloud.register(email, password);
                         writer.append("RegisterSuccess\n");
-                        writer.append("Utilizador registado com sucesso!");
+                        writer.append("Utilizador registado com sucesso!\n");
                     } catch (ExistingUserException e) {
                         writer.append("Unsuccessful\n");
                     }
@@ -67,7 +68,7 @@ public class ClientConnection implements Runnable{
                         writer.append("Order was created successfully\n");
                     } catch (NonExistingServerException e ) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
@@ -75,33 +76,47 @@ public class ClientConnection implements Runnable{
 
                 case "Auction": {
 
+                    String id = reader.readLine();
                     String type = reader.readLine();
                     String bid = reader.readLine();
 
                     try {
-                        int id = cloud.auction(type,Float.valueOf(bid),email);
+                        cloud.auction(Integer.valueOf(id),Float.valueOf(bid),type,email);
                         writer.append("AuctionSuccess\n");
                         writer.append(String.valueOf(id)+"\n");
                         writer.append(type+"\n");
                         writer.append("Auction was created successfully\n");
                     } catch (NonExistingServerException e) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
+                }
+
+                case "RentedServers": {
+                    try{
+                        System.out.println("in");
+                        writer.append("RentedServersSuccess\n");
+                        String s =cloud.rentedServers(email);
+                        System.out.println(cloud.rentedServers(email));
+                        writer.append("Rented Servers: "+s+"\n");
+                        System.out.println("out");
+                    }catch(UserNotAuthenticatedException e){
+                        writer.append("Unsuccessful\n");
+                    }
                 }
 
                 case "LeaveServer": {
                     String id = reader.readLine();
 
                     try {
-                        cloud.leaveServer(Integer.valueOf(id));
+                        cloud.leaveServer(Integer.valueOf(id),email);
                         writer.append("LeaveServerSuccess\n");
                         writer.append("Servidor abandonado com sucesso!\n");
                     } catch (NonExistingServerException e) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
@@ -111,10 +126,9 @@ public class ClientConnection implements Runnable{
                     try {
                         float funds = cloud.funds(email);
                         writer.append("Funds\n");
-                        writer.append(Float.toString(funds) + "\n");
                         writer.append("Funds: " + Float.toString(funds) + "\n");
                         break;
-                    } catch(UserNotAutenthicatedException e) {
+                    } catch(UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                 }
