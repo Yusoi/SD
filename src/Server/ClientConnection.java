@@ -2,7 +2,6 @@ package Server;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
 
 import Exceptions.*;
 
@@ -69,7 +68,7 @@ public class ClientConnection implements Runnable{
                         writer.append("Order was created successfully\n");
                     } catch (NonExistingServerException e ) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
@@ -89,10 +88,23 @@ public class ClientConnection implements Runnable{
                         writer.append("Auction was created successfully\n");
                     } catch (NonExistingServerException e) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
+                }
+
+                case "RentedServers": {
+                    try{
+                        System.out.println("in");
+                        writer.append("RentedServersSuccess\n");
+                        String s =cloud.rentedServers(email);
+                        System.out.println(cloud.rentedServers(email));
+                        writer.append("Rented Servers: "+s+"\n");
+                        System.out.println("out");
+                    }catch(UserNotAuthenticatedException e){
+                        writer.append("Unsuccessful\n");
+                    }
                 }
 
                 case "LeaveServer": {
@@ -104,7 +116,7 @@ public class ClientConnection implements Runnable{
                         writer.append("Servidor abandonado com sucesso!\n");
                     } catch (NonExistingServerException e) {
                         writer.append("Unsuccessful\n");
-                    } catch (UserNotAutenthicatedException e) {
+                    } catch (UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                     break;
@@ -116,7 +128,7 @@ public class ClientConnection implements Runnable{
                         writer.append("Funds\n");
                         writer.append("Funds: " + Float.toString(funds) + "\n");
                         break;
-                    } catch(UserNotAutenthicatedException e) {
+                    } catch(UserNotAuthenticatedException e) {
                         writer.append("Unsuccessful\n");
                     }
                 }

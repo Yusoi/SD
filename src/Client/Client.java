@@ -10,21 +10,21 @@ import java.util.Scanner;
 
 public class Client extends Thread {
 
-    private User user;
+    private String email;
     private BufferedWriter out;
     private boolean loggedIn;
 
     private int port;
 
     public Client(BufferedWriter out){
-        this.user = new User();
+        this.email = null;
         this.out = out;
         this.loggedIn = false;
     }
 
-    public User getUser() {
-        return user;
-    }
+    public String getEmail(){return email;}
+
+    public void setEmail(String email){ this.email = email; }
 
     /**
      * Método que envia as informações necessárias de registo para o testeWorker da Server.Cloud associado a este cliente.
@@ -125,6 +125,11 @@ public class Client extends Thread {
         out.flush();
     }
 
+    public void rentedServers() throws IOException {
+        out.write("RentedServers\n");
+        out.flush();
+    }
+
     /**
      * Método que envia as informações necessárias de libertar um servidor para o testeWorker da Server.Cloud associado a este cliente.
      */
@@ -132,13 +137,8 @@ public class Client extends Thread {
         Scanner s = new Scanner(System.in);
         String id = "";
 
-        System.out.println("Reservation id: "+ this.user.getReservationIDsType().toString());
         if (s.hasNextLine()) {
             id = s.nextLine();
-            if(this.user.getSpecificId(Integer.parseInt(id))==null) {
-                System.out.println("ERROR: Invalid id.");
-                return;
-            }
         }
 
         out.write("LeaveServer\n");
@@ -167,7 +167,7 @@ public class Client extends Thread {
 
     public static void menu(boolean loggedIn) {
         String menu1 = "Options:\n\t- Register\n\t- Login\n\t- Quit\n";
-        String menu2 = "Options:\n\t- Order\n\t- Auction\n\t- LeaveServer\n\t- Funds\n\t- Logout\n";
+        String menu2 = "Options:\n\t- Order\n\t- Auction\n\t- Rented Servers\n\t- Leave Server\n\t- Funds\n\t- Logout\n";
 
         if (!loggedIn) System.out.print(menu1);
         else System.out.print(menu2);
@@ -200,7 +200,6 @@ public class Client extends Thread {
 
             Scanner s = new Scanner(System.in);
             String str = "";
-            boolean logedOut = false;
 
             menu(c.getLoggedIn());
 
@@ -208,7 +207,7 @@ public class Client extends Thread {
                 str = s.nextLine();
             }
 
-            while(!(str.equals("Quit") && c.getUser().getEmail()==null) && !logedOut) {
+            while(!(str.equals("Quit") && c.getEmail()==null)) {
                 if(!c.getLoggedIn()){
                     switch (str) {
                         case "Register":
@@ -229,7 +228,10 @@ public class Client extends Thread {
                         case "Auction":
                             c.auction();
                             break;
-                        case "LeaveServer":
+                        case "Rented Servers":
+                            c.rentedServers();
+                            break;
+                        case "Leave Server":
                             c.leaveServer();
                             break;
                         case "Funds":
@@ -237,14 +239,13 @@ public class Client extends Thread {
                             break;
                         case "Logout":
                             c.logout();
-                            logedOut=true;
                             break;
                         default:
                             System.out.println("ERROR: Invalid operation.");
                     }
                 }
 
-                if (!logedOut && s.hasNextLine())
+                if (s.hasNextLine())
                     str = s.nextLine();
             }
 

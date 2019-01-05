@@ -37,10 +37,12 @@ public class ReadFromCloud implements Runnable{
             while((str=in.readLine())!=null){
                 if(!client.getLoggedIn()) {
                     switch (str) {
+                        //Working
                         case "RegisterSuccess":
                             System.out.println(in.readLine()); //mensagem mais especifica para o cliente tipo "O registo ocorreu com sucesso.\n"
                             break;
 
+                        //Working
                         case "LoginSuccess":
                             client.setLoggedIn(true);
                             System.out.println(in.readLine());
@@ -67,17 +69,25 @@ public class ReadFromCloud implements Runnable{
                             System.out.println(in.readLine());
                             break;
 
+                        case "RentedServersSuccess":
+                            System.out.println("In Client");
+                            System.out.println(in.readLine());
+                            break;
+
                         case "LeaveServerSuccess":
                             id = Integer.parseInt(in.readLine());
                             System.out.println(in.readLine());
                             break;
 
+                        //Working
                         case "Funds":
                             System.out.println(in.readLine());
                             break;
 
+                        //Working
                         case "LogoutSuccess":
                             client.setLoggedIn(false);
+                            client.setEmail(null);
                             System.out.println(in.readLine());
                             break;
 

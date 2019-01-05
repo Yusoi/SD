@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class Cloud implements Runnable{
 
@@ -73,21 +74,10 @@ public class Cloud implements Runnable{
         } else throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password");
     }
 
-    /*
-    public void addServer(Server s)  {
-        synchronized (freeServers) {
-            if (freeServers.containsKey(s.getServerId())) {
-                freeServers.put(s.getServerId(), freeServers.get(s.getServerId()) + 1);
-            } else {
-                freeServers.put(s.getServerId(), 1);
-            }
-        }
-    }*/
-
     //Função que arrenda um servidor a um utilizador pelo preço nominal
-    public int order(String serverType, String email) throws NonExistingServerException, UserNotAutenthicatedException{
+    public int order(String serverType, String email) throws NonExistingServerException, UserNotAuthenticatedException {
         if(email == null){
-            throw new UserNotAutenthicatedException("Not logged in");
+            throw new UserNotAuthenticatedException("Not logged in");
         }
 
         //TODO Dar synchronize aos hashmaps individualmente mas cuidado para evitar deadlock
@@ -112,9 +102,9 @@ public class Cloud implements Runnable{
     }
 
     //Função que deixa ao utilizador licitar num leilão
-    public int auction(int auctionId, float bid, String serverType, String email) throws NonExistingServerException, UserNotAutenthicatedException{
+    public int auction(int auctionId, float bid, String serverType, String email) throws NonExistingServerException, UserNotAuthenticatedException {
         if(email == null){
-            throw new UserNotAutenthicatedException("Not logged in");
+            throw new UserNotAuthenticatedException("Not logged in");
         }
 
 
@@ -124,9 +114,9 @@ public class Cloud implements Runnable{
     }
 
     //Função que liberta o servidor de um utilizador
-    public void leaveServer(int id, String email) throws NonExistingServerException, UserNotAutenthicatedException{
+    public void leaveServer(int id, String email) throws NonExistingServerException, UserNotAuthenticatedException {
         if(email == null){
-            throw new UserNotAutenthicatedException("Not logged in");
+            throw new UserNotAuthenticatedException("Not logged in");
         }
 
         //TODO Dar synchronize aos hashmaps individualmente mas cuidado para evitar deadlock
@@ -145,10 +135,26 @@ public class Cloud implements Runnable{
 
     }
 
-    //Função que retorna os fundos correspondentes ao utilizador
-    public float funds(String email) throws UserNotAutenthicatedException{
+    public String rentedServers(String email) throws UserNotAuthenticatedException {
         if(email == null){
-            throw new UserNotAutenthicatedException("Not logged in");
+            throw new UserNotAuthenticatedException("Not logged in");
+        }
+
+        return rents.values().stream().filter(r -> r.getUser().getEmail().equals(email)).map(r -> r.getId()+"-"+r.getServer().getServerName()).collect(Collectors.joining(" "));
+    }
+
+    public String biddedAuctions(String email) throws UserNotAuthenticatedException {
+        if(email == null){
+            throw new UserNotAuthenticatedException("Not logged in");
+        }
+
+        return auctions.values().stream().filter(r -> r.getHighestBidder().getEmail().equals(email)).map(r -> r.getId()+"-"+r.getServer().getServerName()).collect(Collectors.joining(" "));
+    }
+
+    //Função que retorna os fundos correspondentes ao utilizador
+    public float funds(String email) throws UserNotAuthenticatedException {
+        if(email == null){
+            throw new UserNotAuthenticatedException("Not logged in");
         }
         return users.get(email).getFunds();
     }
