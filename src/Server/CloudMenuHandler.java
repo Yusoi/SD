@@ -99,8 +99,6 @@ public class CloudMenuHandler implements Runnable{
 
             menu();
 
-            System.out.println("Why\n");
-
             if (s.hasNextLine())
                 str = s.nextLine();
         }
