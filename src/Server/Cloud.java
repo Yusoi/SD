@@ -14,24 +14,24 @@ import java.util.stream.Collectors;
 public class Cloud implements Runnable{
 
     //Guardar utilizadores
-    public HashMap<String,User> users; //users ou clients again
+    private HashMap<String,User> users; //users ou clients again
     //Guardar número de servidores livres de cada tipo
-    public HashMap<String,Integer> freeServers;
+    private HashMap<String,Integer> freeServers;
     //Guarda detalhes sobre um certo tipo de servidor
-    public HashMap<String,Server> serverDetails;
+    private HashMap<String,Server> serverDetails;
     //Guarda rents por identificador
-    public HashMap<Integer, Rent> rents;
+    private HashMap<Integer, Rent> rents;
     //Guarda os leilões ativos
-    public HashMap<Integer, Auction> auctions;
+    private HashMap<Integer, Auction> auctions;
     //Guarda preços por tipo de servidor, String = ServerType
-    public HashMap<String, Float> prices;
+    private HashMap<String, Float> prices;
 
     //Port da ServerSocket
-    public int port;
+    private int port;
     //O ServerSocket em si
-    public ServerSocket serverSocket = null;
+    private ServerSocket serverSocket = null;
     //Server está parado ou não
-    public boolean isStopped = false;
+    private boolean isStopped = false;
 
 
     public Cloud(int port){
@@ -53,6 +53,10 @@ public class Cloud implements Runnable{
         serverDetails.put("m1.theta",new Server("m1.theta",250));
         serverDetails.put("m2.rho",new Server("m2.rho",300));
         serverDetails.put("l1.omega",new Server("l1.omega",500));
+    }
+
+    public boolean isStopped(){
+        return isStopped;
     }
 
     // mandar por socket ao cliente a dizer erro ou certo
@@ -113,7 +117,7 @@ public class Cloud implements Runnable{
 
     public String auctionCatalogue() {
         synchronized (auctions) {
-            return auctions.values().stream().map(e -> Integer.toString(e.getId())+" - "+e.getServer().getServerName()+" - Highest Bid: "+e.getValue()).collect(Collectors.joining(" "));
+            return auctions.values().stream().map(e -> Integer.toString(e.getId())+" - "+e.getServer().getServerName()+" - Minimal Bid: "+e.getMinimalBid()).collect(Collectors.joining(" "));
         }
     }
 
@@ -206,9 +210,9 @@ public class Cloud implements Runnable{
     }
 
     //Função server side que serve para criar um leilão
-    public synchronized void createAuction(String serverType, float minimalBid, String email, int duration) throws NonExistingServerException{
+    public synchronized void createAuction(String serverType, float minimalBid, int duration) throws NonExistingServerException{
         //TODO sincronizar
-        if(!serverDetails.containsKey(serverType)){
+        if(!serverDetails.containsKey(serverType) || freeServers.get(serverType) <= 0){
             throw new NonExistingServerException("Server does not exist\n");
         }
 
@@ -309,7 +313,6 @@ public class Cloud implements Runnable{
 
             }
 
-
         }
 
     }
@@ -317,13 +320,17 @@ public class Cloud implements Runnable{
     public static void main (String[] args) {
         int port = 12345;
         Cloud cloud = new Cloud(port);
+        CloudMenuHandler cmh = new CloudMenuHandler(cloud);
 
         Thread cloudThread = new Thread(cloud);
+        Thread cmhThread = new Thread(cmh);
 
         cloudThread.start();
+        cmhThread.start();
 
         try {
             cloudThread.join();
+            cmhThread.join();
         }catch(InterruptedException e){
             e.printStackTrace();
         }

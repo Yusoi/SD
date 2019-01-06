@@ -72,8 +72,6 @@ public class ReadFromCloud implements Runnable{
 
                     //Still needs testing
                     case "AuctionSuccess": {
-                        id = Integer.parseInt(in.readLine());
-                        type = in.readLine();
                         System.out.println(in.readLine());
                         Client.menu(client.getLoggedIn());
                         break;
