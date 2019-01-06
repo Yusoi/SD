@@ -7,9 +7,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Cloud implements Runnable{
 
@@ -24,7 +24,8 @@ public class Cloud implements Runnable{
     //Guarda os leilões ativos
     private HashMap<Integer, Auction> auctions;
     //Guarda preços por tipo de servidor, String = ServerType
-    private HashMap<String, Float> prices;
+
+    private ReentrantLock userlock, freelock, detaillock, rentlock, auctionlock;
 
     //Port da ServerSocket
     private int port;
@@ -41,7 +42,11 @@ public class Cloud implements Runnable{
         this.serverDetails = new HashMap<>();
         this.rents = new HashMap<>();
         this.auctions = new HashMap<>();
-        this.prices = new HashMap<>();
+        this.userlock = new ReentrantLock();
+        this.freelock = new ReentrantLock();
+        this.detaillock = new ReentrantLock();
+        this.rentlock = new ReentrantLock();
+        this.auctionlock = new ReentrantLock();
 
         //TODO Aqui está-se a adicionar manualmente os servidores e os dados correspondentes aos mesmos
         freeServers.put("s1.alpha",2);
@@ -61,25 +66,37 @@ public class Cloud implements Runnable{
 
     // mandar por socket ao cliente a dizer erro ou certo
     public boolean register(String email, String password) throws ExistingUserException {
-        synchronized (users) {
+        userlock.lock();
+        try{
             if (!users.containsKey(email)) {
                 User user = new User(email, password, (float) 0);
                 users.put(email, user);
             } else throw new ExistingUserException("O utilizador já existe\n");
+        }finally {
+            userlock.unlock();
         }
         return true; //na "interface", basta ver se é true para imprimir "registado com sucesso" ou algo do genero.
     }
 
     //Função que realiza o login do utilizador
     public boolean login(String email, String password) throws WrongCredentialsException {
-        if (users.containsKey(email) && users.get(email).getPassword().equals(password)){
-            return true;
-        } else throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password\n");
+        userlock.lock();
+        try {
+            if (users.containsKey(email) && users.get(email).getPassword().equals(password)) {
+                return true;
+            } else
+                throw new WrongCredentialsException("Nao existe nenhum utilizador com essa combinação de email e password\n");
+        }finally {
+            userlock.unlock();
+        }
     }
 
     public String serverCatalogue() {
-        synchronized (freeServers) {
+        freelock.lock();
+        try {
             return freeServers.entrySet().stream().filter(e -> e.getValue() > 0).map(e -> e.getKey()).collect(Collectors.joining(" "));
+        }finally {
+            freelock.unlock();
         }
     }
 
@@ -90,21 +107,28 @@ public class Cloud implements Runnable{
         }
 
         //TODO Dar synchronize aos hashmaps individualmente mas cuidado para evitar deadlock
-        synchronized(freeServers) {
-            if(!freeServers.containsKey(serverType)){
+        freelock.lock();
+        try {
+            if (!freeServers.containsKey(serverType)) {
                 throw new NonExistingServerException("Server Nonexistent\n");
             }
-            if(freeServers.get(serverType) == 0){
+            if (freeServers.get(serverType) == 0) {
                 Optional<Auction> a = auctions.values().stream().filter(e -> e.getServer().getServerName().equals(serverType)).findAny();
 
-                if(a.isPresent()){
+                if (a.isPresent()) {
                     cancelAuction(a.get().getId());
-                }else{
+                } else {
                     throw new NonExistingServerException("Not enough servers of that type\n");
-                }
-            }else {
+                    }
+                } else {
                 freeServers.put(serverType, freeServers.get(serverType) - 1);
+                }
+            }finally {
+                freelock.unlock();
             }
+
+        rentlock.lock();
+        try{
             int rentId = generateRentId();
             User u = users.get(email);
             Rent rent = new Rent(rentId,0,serverDetails.get(serverType).getPrecoNominal(),u,serverDetails.get(serverType));
@@ -112,12 +136,17 @@ public class Cloud implements Runnable{
             rents.put(rentId,rent);
 
             return rentId;
+        }finally {
+            rentlock.unlock();
         }
     }
 
     public String auctionCatalogue() {
-        synchronized (auctions) {
+        auctionlock.lock();
+        try{
             return auctions.values().stream().map(e -> Integer.toString(e.getId())+" - "+e.getServer().getServerName()+" - Minimal Bid: "+e.getMinimalBid()).collect(Collectors.joining(" "));
+        }finally {
+            auctionlock.unlock();
         }
     }
 
@@ -130,25 +159,24 @@ public class Cloud implements Runnable{
         Auction a;
         User u;
 
-        synchronized(auctions){
+        auctionlock.lock();
+        try{
             if(auctions.containsKey(auctionId)) {
                 a = auctions.get(auctionId);
             } else {
                 throw new NonExistingServerException("Auction does not exist\n");
             }
+        }finally {
+            auctionlock.unlock();
         }
 
-        synchronized(users){
-            u = users.get(email);
-        }
+        u = users.get(email);
 
         try {
             a.newBid(u, bid);
-        }catch(BidNotHighEnoughException e){
+        }catch(BidNotHighEnoughException e) {
             throw e;
         }
-
-
         return auctionId;
     }
 
@@ -159,23 +187,25 @@ public class Cloud implements Runnable{
         }
 
         //TODO Dar synchronize aos hashmaps individualmente mas cuidado para evitar deadlock
-        synchronized(this) {
             Rent rent = rents.get(id);
+        synchronized (rent) {
             if (rent == null) {
                 throw new NonExistingServerException("Server Nonexistent\n");
             }
 
             String serverName = rent.getServer().getServerName();
 
-            if(rent.getUser().getEmail().equals(email)){
-                freeServers.put(serverName,freeServers.get(serverName)+1);
+            if (rent.getUser().getEmail().equals(email)) {
+                freelock.lock();
+                freeServers.put(serverName, freeServers.get(serverName) + 1);
+                freelock.unlock();
+                rentlock.lock();
                 rents.remove(id);
+                rentlock.unlock();
             } else {
                 throw new NonExistingServerException("Server doesn't belong to this user\n");
             }
-
         }
-
     }
 
     public String rentedServers(String email) throws UserNotAuthenticatedException {
@@ -183,8 +213,11 @@ public class Cloud implements Runnable{
             throw new UserNotAuthenticatedException("Not logged in\n");
         }
 
-        synchronized (rents) {
+        rentlock.lock();
+        try {
             return rents.values().stream().filter(r -> r.getUser().getEmail().equals(email)).map(r -> r.getId() + ":" + r.getServer().getServerName()+"-"+r.getPricePerHour()).collect(Collectors.joining(" "));
+        }finally {
+            rentlock.unlock();
         }
     }
 
@@ -193,8 +226,11 @@ public class Cloud implements Runnable{
             throw new UserNotAuthenticatedException("Not logged in\n");
         }
 
-        synchronized (auctions) {
+        auctionlock.lock();
+        try {
             return auctions.values().stream().filter(r -> r.getHighestBidder().getEmail().equals(email)).map(r -> r.getId() + ":" + r.getServer().getServerName()).collect(Collectors.joining(" "));
+        }finally {
+            auctionlock.unlock();
         }
     }
 
@@ -204,22 +240,32 @@ public class Cloud implements Runnable{
             throw new UserNotAuthenticatedException("Not logged in\n");
         }
 
-        synchronized(users) {
+        userlock.lock();
+        try {
             return users.get(email).getFunds();
+        }finally {
+            userlock.unlock();
         }
     }
 
     //Função server side que serve para criar um leilão
     public synchronized void createAuction(String serverType, float minimalBid, int duration) throws NonExistingServerException{
         //TODO sincronizar
-        if(!serverDetails.containsKey(serverType) || freeServers.get(serverType) <= 0){
-            throw new NonExistingServerException("Server does not exist\n");
+        detaillock.lock();
+        try {
+            if (!serverDetails.containsKey(serverType) || freeServers.get(serverType) <= 0) {
+                throw new NonExistingServerException("Server does not exist\n");
+            }
+        }finally {
+            detaillock.unlock();
         }
 
         int auctionId = generateAuctionId();
 
-        Auction auction = new Auction(auctionId,minimalBid,serverDetails.get(serverType),duration,this);
-        auctions.put(auctionId,auction);
+        Auction auction = new Auction(auctionId, minimalBid, serverDetails.get(serverType), duration, this);
+        auctionlock.lock();
+        auctions.put(auctionId, auction);
+        auctionlock.unlock();
 
         new Thread(auction).start();
 
@@ -232,53 +278,74 @@ public class Cloud implements Runnable{
         //TODO Dar synchronize aos hashmaps individualmente mas cuidado para evitar deadlock
         //TODO Adicionar o servidor ao utilizador
         //TODO Possibilidade de cancelar leilão em caso de não haver servidor disponível
-        synchronized(freeServers) {
-
-            if(auctions.get(auctionId).getHighestBidder() == null){
+        auctionlock.lock();
+        try {
+            if (auctions.get(auctionId).getHighestBidder() == null) {
                 auctions.remove(auctionId);
                 throw new NoBidException("No user bid\n");
             }
+        }finally {
+            auctionlock.unlock();
+        }
 
-            int rentId = generateRentId();
+        int rentId = generateRentId();
             User u = users.get(email);
-            Rent rent = new Rent(rentId,1,highestBid,u,serverDetails.get(serverType));
-            u.setFunds(u.getFunds()+rent.getPricePerHour());
-            auctions.remove(auctionId);
-            rents.put(rentId,rent);
+            synchronized (u) {
+                Rent rent = new Rent(rentId, 1, highestBid, u, serverDetails.get(serverType));
+                u.setFunds(u.getFunds() + rent.getPricePerHour());
+                auctionlock.lock();
+                auctions.remove(auctionId);
+                auctionlock.unlock();
+                rentlock.lock();
+                rents.put(rentId, rent);
+                rentlock.unlock();
+            }
 
             return rentId;
-        }
     }
 
     public void cancelAuction(int auctionId){
 
-        //TODO sincronizar
-        if(!auctions.containsKey(auctionId)){
-            System.out.println("Auction "+auctionId+" does not exist");
-            return;
+        auctionlock.lock();
+        try {
+            if (!auctions.containsKey(auctionId)) {
+                System.out.println("Auction " + auctionId + " does not exist");
+                return;
+            }
+            //TODO avisar os clients que a auction foi terminada
+
+            auctions.get(auctionId).setTerminated(true);
+            auctions.remove(auctionId);
+        }finally {
+            auctionlock.unlock();
         }
-
-        //TODO avisar os clients que a auction foi terminada
-
-        auctions.get(auctionId).setTerminated(true);
-        auctions.remove(auctionId);
-
     }
 
     //Gera um id novo para cada aluguer
     public int generateRentId(){
-        if(rents.isEmpty()){
-            return 1;
-        }else {
-            return Collections.max(rents.keySet()) + 1;
+        rentlock.lock();
+        try {
+
+            if (rents.isEmpty()) {
+                return 1;
+            } else {
+                return Collections.max(rents.keySet()) + 1;
+            }
+        }finally {
+            rentlock.unlock();
         }
     }
 
     public int generateAuctionId() {
-        if (auctions.isEmpty()) {
-            return 1;
-        } else {
-            return Collections.max(auctions.keySet()) + 1;
+        auctionlock.lock();
+        try {
+            if (auctions.isEmpty()) {
+                return 1;
+            } else {
+                return Collections.max(auctions.keySet()) + 1;
+            }
+        }finally {
+            auctionlock.unlock();
         }
     }
 

@@ -34,21 +34,21 @@ public class Rent {
         return user;
     }
 
-    public void setId(int id) {
+    public synchronized void setId(int id) {
         this.id = id;
     }
 
-    public void setRentType(int rentType) {
+    public synchronized void setRentType(int rentType) {
         this.rentType = rentType;
     }
 
-    public void setPricePerHour(int pricePerHour) { this.pricePerHour = pricePerHour; }
+    public synchronized void setPricePerHour(int pricePerHour) { this.pricePerHour = pricePerHour; }
 
-    public void setServer(Server server) {
+    public synchronized void setServer(Server server) {
         this.server = server;
     }
 
-    public void setUser(User user) {
+    public synchronized void setUser(User user) {
         this.user = user;
     }
 }
