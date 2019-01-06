@@ -1,7 +1,5 @@
 package Client;
 
-import Business.User;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -79,13 +77,11 @@ public class Client extends Thread {
         Scanner s = new Scanner(System.in);
         String type = "";
 
-        System.out.println("Server type: [typeX] [typeY] etc"); //Listar o tipo de servidores que temos disponiveis
+        out.write("ServerCatalogue\n");
+        out.flush();
+
         if (s.hasNextLine()) {
             type = s.nextLine();
-            if(!(type.equals("typeX") || type.equals("typeY"))){ //Depois mudar
-                System.out.println("ERROR: Invalid type.");
-                return;
-            }
         }
 
         out.write("Order\n");
@@ -96,37 +92,39 @@ public class Client extends Thread {
     /**
      * Método que envia as informações necessárias de participação num leilão de reserva para o testeWorker da Server.Cloud associado a este cliente.
      */
-    //TODO enviar o id da auction
     public void auction() throws IOException {
         Scanner s = new Scanner(System.in);
-        String type = "", bid = "";
+        String id = "", bid = "";
 
-        System.out.println("Server type: [typeX] [typeY]"); //mudar!
+        out.write("AuctionCatalogue\n");
+        out.flush();
+
         if (s.hasNextLine()) {
-            type = s.nextLine();
-            if(!type.equals("typeX") || type.equals("typeY")){ 
-                System.out.println("ERROR: Invalid type.");
-                return;
-            }
+            id = s.nextLine();
         }
 
         System.out.println("Auction: ");
         if (s.hasNextLine()) {
             bid = s.nextLine();
             if(Float.parseFloat(bid)<=0) {
-                System.out.println("ERROR: Auction must be greater than zero.");
+                System.out.println("ERROR: Bid must be greater than zero.");
                 return;
             }
         }
 
         out.write("Auction\n");
-        out.write(type+"\n");
+        out.write(id+"\n");
         out.write(bid+"\n");
         out.flush();
     }
 
     public void rentedServers() throws IOException {
         out.write("RentedServers\n");
+        out.flush();
+    }
+
+    public void biddedAuctions() throws IOException {
+        out.write("BiddedAuctions\n");
         out.flush();
     }
 
@@ -167,7 +165,7 @@ public class Client extends Thread {
 
     public static void menu(boolean loggedIn) {
         String menu1 = "Options:\n\t- Register\n\t- Login\n\t- Quit\n";
-        String menu2 = "Options:\n\t- Order\n\t- Auction\n\t- Rented Servers\n\t- Leave Server\n\t- Funds\n\t- Logout\n";
+        String menu2 = "Options:\n\t- Order\n\t- Auction\n\t- Rented Servers\n\t- Bidded Auctions\n\t- Leave Server\n\t- Funds\n\t- Logout\n";
 
         if (!loggedIn) System.out.print(menu1);
         else System.out.print(menu2);
@@ -230,6 +228,9 @@ public class Client extends Thread {
                             break;
                         case "Rented Servers":
                             c.rentedServers();
+                            break;
+                        case "Bidded Auctions":
+                            c.biddedAuctions();
                             break;
                         case "Leave Server":
                             c.leaveServer();

@@ -1,7 +1,5 @@
 package Client;
 
-import Business.User;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,77 +33,105 @@ public class ReadFromCloud implements Runnable{
             int id;
 
             while((str=in.readLine())!=null){
-                if(!client.getLoggedIn()) {
-                    switch (str) {
-                        //Working
-                        case "RegisterSuccess":
-                            System.out.println(in.readLine()); //mensagem mais especifica para o cliente tipo "O registo ocorreu com sucesso.\n"
-                            break;
-
-                        //Working
-                        case "LoginSuccess":
-                            client.setLoggedIn(true);
-                            System.out.println(in.readLine());
-                            break;
-
-                        case "Unsuccessful":
-                            System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
-                            break;
-
-                        default:
-                            System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
+                switch (str) {
+                    //Working
+                    case "RegisterSuccess": {
+                        System.out.println(in.readLine()); //mensagem mais especifica para o cliente tipo "O registo ocorreu com sucesso.\n"
+                        Client.menu(client.getLoggedIn());
+                        break;
                     }
-                } else {
-                    switch(str){
-                        case "OrderSuccess":
-                            id = Integer.parseInt(in.readLine());
-                            type = in.readLine();
-                            System.out.println(in.readLine());
-                            break;
 
-                        case "AuctionSuccess":
-                            id = Integer.parseInt(in.readLine());
-                            type = in.readLine();
-                            System.out.println(in.readLine());
-                            break;
+                    //Working
+                    case "LoginSuccess": {
+                        client.setLoggedIn(true);
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
 
-                        case "RentedServersSuccess":
-                            System.out.println("In Client");
-                            System.out.println(in.readLine());
-                            break;
+                    //Working
+                    case "ServerCatalogueSuccess": {
+                        System.out.println(in.readLine());
+                        break;
+                    }
 
-                        case "LeaveServerSuccess":
-                            id = Integer.parseInt(in.readLine());
-                            System.out.println(in.readLine());
-                            break;
+                    //Working
+                    case "OrderSuccess": {
+                        id = Integer.parseInt(in.readLine());
+                        type = in.readLine();
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
 
-                        //Working
-                        case "Funds":
-                            System.out.println(in.readLine());
-                            break;
+                    //Still needs testing
+                    case "AuctionCatalogueSuccess": {
+                        System.out.println(in.readLine());
+                        break;
+                    }
 
-                        //Working
-                        case "LogoutSuccess":
-                            client.setLoggedIn(false);
-                            client.setEmail(null);
-                            System.out.println(in.readLine());
-                            break;
+                    //Still needs testing
+                    case "AuctionSuccess": {
+                        id = Integer.parseInt(in.readLine());
+                        type = in.readLine();
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
 
-                        case "CancelledServer":
-                            id = Integer.parseInt(in.readLine());
-                            System.out.println(in.readLine());
-                            break;
+                    //Working
+                    case "RentedServersSuccess": {
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
 
-                        case "Unsuccessful":
-                            System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
-                            break;
+                    //Still needs testing
+                    case "BiddedAuctionsSuccess": {
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
 
-                        default:
-                            System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
+                    //Working
+                    case "LeaveServerSuccess": {
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
+
+                    //Working
+                    case "Funds": {
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
+
+                    //Working
+                    case "LogoutSuccess": {
+                        client.setLoggedIn(false);
+                        client.setEmail(null);
+                        System.out.println(in.readLine());
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
+
+                    case "AuctionCancel": {
+                        System.out.println("Auction number "+in.readLine()+" was cancelled by the server");
+                        break;
+                    }
+
+                    //Working
+                    case "Unsuccessful": {
+                        System.out.println(in.readLine()); //todas as mensagens de insucesso tipo "Login failed.\n" OU "Email already exists. Registration failed.\n"
+                        Client.menu(client.getLoggedIn());
+                        break;
+                    }
+
+                    default: {
+                        System.out.println("ERROR: There seems to be a problem with the Server.Cloud.\n");
                     }
                 }
-
-                client.menu(client.getLoggedIn());
             }
 
             socket.shutdownInput();
