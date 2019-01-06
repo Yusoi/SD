@@ -82,7 +82,12 @@ public class Auction implements Runnable{
             bidlock.unlock();
         }
 
-        return highestBidder.getKey();
+
+        try {
+            return highestBidder.getKey();
+        }catch(NullPointerException e){
+            return null;
+        }
     }
 
     public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException {

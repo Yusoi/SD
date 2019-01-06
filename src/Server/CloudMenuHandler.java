@@ -53,7 +53,6 @@ public class CloudMenuHandler implements Runnable{
         }catch(NonExistingServerException e){
             System.out.println("Server does not exist");
         }
-        s.close();
         System.out.println("Auction started successfully");
     }
 
@@ -72,7 +71,6 @@ public class CloudMenuHandler implements Runnable{
             s.close();
             return;
         }
-        s.close();
         System.out.println("Auction cancelled successfully");
     }
 
@@ -100,6 +98,8 @@ public class CloudMenuHandler implements Runnable{
             }
 
             menu();
+
+            System.out.println("Why\n");
 
             if (s.hasNextLine())
                 str = s.nextLine();
