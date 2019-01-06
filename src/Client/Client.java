@@ -99,11 +99,12 @@ public class Client extends Thread {
         out.write("AuctionCatalogue\n");
         out.flush();
 
+        System.out.print("Auction id: ");
         if (s.hasNextLine()) {
             id = s.nextLine();
         }
 
-        System.out.println("Auction: ");
+        System.out.println("Bid: ");
         if (s.hasNextLine()) {
             bid = s.nextLine();
             if(Float.parseFloat(bid)<=0) {

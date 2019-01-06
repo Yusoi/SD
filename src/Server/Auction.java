@@ -16,7 +16,7 @@ public class Auction implements Runnable{
 
     private int id;
     private HashMap<User,Float> bidders;
-    private float value;
+    private float minimalBid;
     private Server server;
     private ReentrantLock lock;
     private LocalDateTime startingTime;
@@ -27,7 +27,7 @@ public class Auction implements Runnable{
     public Auction(int id, float v, Server s, int duration, Cloud cloud){
         this.id = id;
         this.bidders = new HashMap<>();
-        this.value = v;
+        this.minimalBid = v;
         this.server = s;
         this.lock = new ReentrantLock();
         this.startingTime = LocalDateTime.now();
@@ -42,8 +42,8 @@ public class Auction implements Runnable{
         return new HashMap<>(bidders);
     }
 
-    public float getValue() {
-        return value;
+    public float getMinimalBid() {
+        return minimalBid;
     }
 
     public Server getServer() {
@@ -60,8 +60,8 @@ public class Auction implements Runnable{
         this.bidders.put(bidder,value);
     }
 
-    public void setValue(float value) {
-        this.value = value;
+    public void setMinimalBid(float value) {
+        this.minimalBid = value;
     }
 
     public void setServer(Server server) {
@@ -82,9 +82,13 @@ public class Auction implements Runnable{
     }
 
     public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException {
+
         lock.lock();
         try {
-            this.addBidder(newBidder,newValue);
+            if(newValue >= minimalBid)
+                this.addBidder(newBidder,newValue);
+            else
+                throw new BidNotHighEnoughException("Bid not high enough");
         }finally {
             lock.unlock();
         }
@@ -95,14 +99,14 @@ public class Auction implements Runnable{
     @Override
     public void run(){
         try {
-            sleep(duration);
+            sleep(duration*1000);
 
             if(!this.terminated) {
 
                 User highestBidder = this.getHighestBidder();
 
                 if(highestBidder != null)
-                    cloud.endAuction(this.id, this.value, this.server.getServerName(), highestBidder.getEmail());
+                    cloud.endAuction(this.id, this.bidders.get(highestBidder), this.server.getServerName(), highestBidder.getEmail());
             }
         }catch(InterruptedException e){
             e.printStackTrace();

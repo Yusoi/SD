@@ -98,14 +98,11 @@ public class ClientConnection implements Runnable{
                 case "Auction": {
 
                     String id = reader.readLine();
-                    String type = reader.readLine();
                     String bid = reader.readLine();
 
                     try {
                         cloud.auction(Integer.valueOf(id),Float.valueOf(bid),email);
                         writer.append("AuctionSuccess\n");
-                        writer.append(String.valueOf(id)+"\n");
-                        writer.append(type+"\n");
                         writer.append("Auction was created successfully\n");
                         break;
                     } catch (NonExistingServerException e) {
