@@ -1,7 +1,5 @@
 package Server;
 
-import java.util.concurrent.locks.Condition;
-
 public class Server extends Thread{
 
     public String name;

@@ -33,6 +33,7 @@ public class CloudMenuHandler implements Runnable{
                 minimalBid = Float.parseFloat(s.nextLine());
             }catch(NumberFormatException e){
                 System.out.println("Invalid number format");
+                s.close();
                 return;
             }
         }
@@ -42,6 +43,7 @@ public class CloudMenuHandler implements Runnable{
                 duration = Integer.parseInt(s.nextLine());
             }catch(NumberFormatException e){
                 System.out.println("Invalid number format");
+                s.close();
                 return;
             }
         }
@@ -51,7 +53,7 @@ public class CloudMenuHandler implements Runnable{
         }catch(NonExistingServerException e){
             System.out.println("Server does not exist");
         }
-
+        s.close();
         System.out.println("Auction started successfully");
     }
 
@@ -67,9 +69,10 @@ public class CloudMenuHandler implements Runnable{
             cloud.cancelAuction(Integer.parseInt(id));
         }catch(NumberFormatException e){
             System.out.println("Invalid number format");
+            s.close();
             return;
         }
-
+        s.close();
         System.out.println("Auction cancelled successfully");
     }
 
@@ -101,5 +104,6 @@ public class CloudMenuHandler implements Runnable{
             if (s.hasNextLine())
                 str = s.nextLine();
         }
+        s.close();
     }
 }

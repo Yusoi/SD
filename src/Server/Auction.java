@@ -4,10 +4,8 @@ import Exceptions.BidNotHighEnoughException;
 import Exceptions.NoBidException;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.Thread.sleep;
@@ -18,7 +16,7 @@ public class Auction implements Runnable{
     private HashMap<User,Float> bidders;
     private float minimalBid;
     private Server server;
-    private ReentrantLock lock;
+    private ReentrantLock lock, bidlock;
     private LocalDateTime startingTime;
     private int duration; //Seconds until the auction ends
     private Cloud cloud;
@@ -30,6 +28,7 @@ public class Auction implements Runnable{
         this.minimalBid = v;
         this.server = s;
         this.lock = new ReentrantLock();
+        this.bidlock = new ReentrantLock();
         this.startingTime = LocalDateTime.now();
         this.duration = duration;
         this.cloud = cloud;
@@ -56,7 +55,7 @@ public class Auction implements Runnable{
         this.id = id;
     }
 
-    public void addBidder(User bidder,float value) {
+    public synchronized void addBidder(User bidder,float value) {
         this.bidders.put(bidder,value);
     }
 
@@ -72,30 +71,28 @@ public class Auction implements Runnable{
 
     public User getHighestBidder(){
         Map.Entry<User,Float> highestBidder = null;
-        for(Map.Entry<User,Float> entry : bidders.entrySet()){
-            if(highestBidder == null || entry.getValue().compareTo(highestBidder.getValue()) > 0){
-                highestBidder = entry;
+        bidlock.lock();
+        try {
+            for (Map.Entry<User, Float> entry : bidders.entrySet()) {
+                if (highestBidder == null || entry.getValue().compareTo(highestBidder.getValue()) > 0) {
+                    highestBidder = entry;
+                }
             }
+        }finally {
+            bidlock.unlock();
         }
 
         return highestBidder.getKey();
     }
 
     public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException {
-
-        lock.lock();
-        try {
             if(newValue >= minimalBid)
                 this.addBidder(newBidder,newValue);
             else
                 throw new BidNotHighEnoughException("Bid not high enough");
-        }finally {
-            lock.unlock();
-        }
     }
 
 
-    //TODO sincronizar a classe
     @Override
     public void run(){
         try {
@@ -104,9 +101,13 @@ public class Auction implements Runnable{
             if(!this.terminated) {
 
                 User highestBidder = this.getHighestBidder();
-
-                if(highestBidder != null)
-                    cloud.endAuction(this.id, this.bidders.get(highestBidder), this.server.getServerName(), highestBidder.getEmail());
+                lock.lock();
+                try {
+                    if (highestBidder != null)
+                        cloud.endAuction(this.id, this.bidders.get(highestBidder), this.server.getServerName(), highestBidder.getEmail());
+                }finally {
+                    lock.unlock();
+                }
             }
         }catch(InterruptedException e){
             e.printStackTrace();
