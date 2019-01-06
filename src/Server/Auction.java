@@ -1,13 +1,12 @@
 package Server;
 
-import Business.Rent;
-import Business.Server;
-import Business.User;
 import Exceptions.BidNotHighEnoughException;
 import Exceptions.NoBidException;
-import Exceptions.NonExistingServerException;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -16,29 +15,31 @@ import static java.lang.Thread.sleep;
 public class Auction implements Runnable{
 
     private int id;
-    private User highestBidder; //user ou client? Estava client
+    private HashMap<User,Float> bidders;
     private float value;
     private Server server;
     private ReentrantLock lock;
     private LocalDateTime startingTime;
     private int duration; //Seconds until the auction ends
     private Cloud cloud;
+    private boolean terminated;
 
     public Auction(int id, float v, Server s, int duration, Cloud cloud){
         this.id = id;
-        this.highestBidder = null;
+        this.bidders = new HashMap<>();
         this.value = v;
         this.server = s;
         this.lock = new ReentrantLock();
         this.startingTime = LocalDateTime.now();
         this.duration = duration;
         this.cloud = cloud;
+        this.terminated = false;
     }
 
     public int getId(){return id;}
 
-    public User getHighestBidder() {
-        return highestBidder;
+    public HashMap<User,Float> getBidders() {
+        return new HashMap<>(bidders);
     }
 
     public float getValue() {
@@ -49,12 +50,14 @@ public class Auction implements Runnable{
         return server;
     }
 
+    public boolean isTerminated() { return terminated; }
+
     public void setId(int id){
         this.id = id;
     }
 
-    public void setHighestBidder(User highestBidder) {
-        this.highestBidder = highestBidder;
+    public void addBidder(User bidder,float value) {
+        this.bidders.put(bidder,value);
     }
 
     public void setValue(float value) {
@@ -65,37 +68,42 @@ public class Auction implements Runnable{
         this.server = server;
     }
 
-    //TODO dar fix
+    public void setTerminated(boolean terminated) { this.terminated = terminated; }
+
+    public User getHighestBidder(){
+        Map.Entry<User,Float> highestBidder = null;
+        for(Map.Entry<User,Float> entry : bidders.entrySet()){
+            if(highestBidder == null || entry.getValue().compareTo(highestBidder.getValue()) > 0){
+                highestBidder = entry;
+            }
+        }
+
+        return highestBidder.getKey();
+    }
+
     public void newBid(User newBidder, float newValue) throws BidNotHighEnoughException {
         lock.lock();
         try {
-            if (newValue > value) {
-                if (newBidder.getFunds() > newValue) {
-                    this.setHighestBidder(newBidder);
-                    this.setValue(newValue);
-                }
-            } else {
-                throw new BidNotHighEnoughException("O valor não é superior que o valor atual licitado");
-            }
+            this.addBidder(newBidder,newValue);
         }finally {
             lock.unlock();
         }
     }
 
 
-     public void closeAuction(){
-        Random random = new Random();
-        Rent rent = new Rent(random.nextInt(), 1, value , this.highestBidder, this.server);
-        lock.lock();
-        this.highestBidder.useFunds(value);
-        lock.unlock();
-    }
-
+    //TODO sincronizar a classe
     @Override
     public void run(){
         try {
             sleep(duration);
-            cloud.endAuction(this.id,this.value,this.server.getServerName(),highestBidder.getEmail());
+
+            if(!this.terminated) {
+
+                User highestBidder = this.getHighestBidder();
+
+                if(highestBidder != null)
+                    cloud.endAuction(this.id, this.value, this.server.getServerName(), highestBidder.getEmail());
+            }
         }catch(InterruptedException e){
             e.printStackTrace();
         }catch(NoBidException e){

@@ -1,4 +1,4 @@
-package Business;
+package Server;
 
 import java.util.concurrent.locks.Condition;
 
@@ -6,7 +6,6 @@ public class Server extends Thread{
 
     public String name;
     public Float precoNominal;
-    public Condition nonOcupated;
 
     public Server(String name, float preco){
         this.name = name;

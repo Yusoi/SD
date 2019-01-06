@@ -1,4 +1,4 @@
-package Business;
+package Server;
 
 public class Rent {
 
